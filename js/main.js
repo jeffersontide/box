@@ -13,7 +13,6 @@ function init() {
     window.interestList = JSON.parse('[{"invertX":false,"invertY":false,"mirrorX":true,"mirrorY":false,"diagNE":false,"diagNW":false,"invertColor":false,"farOut":false,"colorCycle":0.5,"gain":0.5,"borderWidth":0.05,"delay":2,"backgroundColor":"#70b2c5","borderColor":"#000000","x":1.125,"y":0,"rot":0,"scale":0.8500000000000001},{"invertX":false,"invertY":false,"mirrorX":true,"mirrorY":false,"diagNE":false,"diagNW":false,"invertColor":false,"farOut":false,"colorCycle":0.5,"gain":0.5,"borderWidth":0.05,"delay":2,"backgroundColor":"#70b2c5","borderColor":"#000000","x":1.0750000000000002,"y":0,"rot":0.03490658503988659,"scale":0.775},{"invertX":false,"invertY":false,"mirrorX":true,"mirrorY":false,"diagNE":false,"diagNW":false,"invertColor":false,"farOut":false,"colorCycle":0.5,"gain":0.5,"borderWidth":0.05,"delay":2,"backgroundColor":"#70b2c5","borderColor":"#000000","x":0.22969924812030057,"y":0.2178757118098539,"rot":0.5235987755982988,"scale":0.8750000000000001},{"invertX":false,"invertY":false,"mirrorX":true,"mirrorY":false,"diagNE":false,"diagNW":false,"invertColor":false,"farOut":false,"colorCycle":0.5,"gain":0.5,"borderWidth":0.05,"delay":2,"backgroundColor":"#70b2c5","borderColor":"#000000","x":0.2567492951127818,"y":0.11791284971527607,"rot":0.5235987755982988,"scale":0.9000000000000001},{"invertX":false,"invertY":false,"mirrorX":true,"mirrorY":false,"diagNE":false,"diagNW":false,"invertColor":false,"farOut":false,"colorCycle":0.5,"gain":0.5,"borderWidth":0.05,"delay":2,"backgroundColor":"#70b2c5","borderColor":"#000000","x":0.2850753185045946,"y":0.337439135099447,"rot":0.9773843811168251,"scale":0.9000000000000001},{"invertX":false,"invertY":false,"mirrorX":true,"mirrorY":false,"diagNE":false,"diagNW":false,"invertColor":false,"farOut":false,"colorCycle":0.5,"gain":0.5,"borderWidth":0.05,"delay":2,"backgroundColor":"#70b2c5","borderColor":"#000000","x":0.3543191852853677,"y":0.17695104841615378,"rot":1.2915436464758048,"scale":0.9000000000000001},{"invertX":false,"invertY":false,"mirrorX":true,"mirrorY":false,"diagNE":false,"diagNW":false,"invertColor":false,"farOut":false,"colorCycle":0.5,"gain":0.5,"borderWidth":0.05,"delay":2,"backgroundColor":"#70b2c5","borderColor":"#000000","x":0.6741116966631931,"y":0.049109365366777985,"rot":1.6406094968746712,"scale":0.7},{"invertX":false,"invertY":false,"mirrorX":true,"mirrorY":false,"diagNE":false,"diagNW":false,"invertColor":false,"farOut":false,"colorCycle":0.5,"gain":0.5,"borderWidth":0.05,"delay":2,"backgroundColor":"#70b2c5","borderColor":"#000000","x":0.5295287954446296,"y":0.1261266461132166,"rot":2.0943951023931975,"scale":0.725},{"invertX":false,"invertY":false,"mirrorX":true,"mirrorY":false,"diagNE":false,"diagNW":false,"invertColor":false,"farOut":false,"colorCycle":0.5,"gain":0.5,"borderWidth":0.05,"delay":2,"backgroundColor":"#70b2c5","borderColor":"#000000","x":0.8432387167997415,"y":0.19935519648274588,"rot":2.3736477827122906,"scale":0.75},{"invertX":false,"invertY":false,"mirrorX":true,"mirrorY":false,"diagNE":false,"diagNW":false,"invertColor":false,"farOut":false,"colorCycle":0.5,"gain":0.5,"borderWidth":0.05,"delay":2,"backgroundColor":"#70b2c5","borderColor":"#000000","x":0.43534397995763624,"y":0.4419895119073559,"rot":2.3736477827122906,"scale":0.75},{"invertX":false,"invertY":false,"mirrorX":true,"mirrorY":false,"diagNE":false,"diagNW":false,"invertColor":false,"farOut":false,"colorCycle":0.5,"gain":0.5,"borderWidth":0.05,"delay":2,"backgroundColor":"#70b2c5","borderColor":"#000000","x":0.4990160912704009,"y":0.10230147031290185,"rot":2.722713633111157,"scale":0.75},{"invertX":false,"invertY":false,"mirrorX":true,"mirrorY":false,"diagNE":false,"diagNW":false,"invertColor":false,"farOut":false,"colorCycle":0.5,"gain":0.5,"borderWidth":0.05,"delay":2,"backgroundColor":"#70b2c5","borderColor":"#000000","x":1.125,"y":0,"rot":0,"scale":0.8500000000000001}]');
     inputList = interestList;
 
-
     // Create screen instance
     window.inputs = new Input(); // default parameter values
     window.toolbar = new Toolbar();
@@ -83,6 +82,15 @@ function init() {
                     inputs.gain = 0.05;
                 });
 
+    toolbar.add("isPaused", "Pause", "checkbox", function() {
+        // This is called after inputs is updated, so not being paused means we
+        // just started animating again.
+        if (!inputs.isPaused) requestAnimationFrame(animate);
+    });
+    toolbar.add("stepFrame", "Step Frame", "button", function() {
+        if (inputs.isPaused) requestAnimationFrame(animate);
+    })
+
     ////////////
     // Constants
     ////////////
@@ -106,9 +114,33 @@ function init() {
                 format          : THREE.RGBFormat,
                 generateMipmaps : false,
                 depthBuffer     : true,
-                stencilBuffer   : false
+                stencilBuffer   : true
              });
     }
+
+    /////////////
+    // Renderer setup
+    /////////////
+
+    renderer = new THREE.WebGLRenderer( {
+        antialias : false,
+        stencil   : false,
+        precision : "mediump",
+        preserveDrawingBuffer : true,
+        autoClear : false,
+    } );
+
+    if (!renderer) {
+        document.getElementByType("body").innerHTML += "oh no webgl";
+    }
+
+    renderer.setSize(c_width, c_height);
+    renderer.sortObjects = false;
+    renderer.autoClearColor = false;
+
+    var container = document.getElementById('container');
+
+    container.appendChild(renderer.domElement);
 
     ////////////
     // Feedback scene setup
@@ -122,7 +154,7 @@ function init() {
      */
 
     // The scene used in the feedback loop
-    var feedbackScene = new THREE.Scene();
+    feedbackScene = new THREE.Scene();
 
     // Initialize all render targets.
     feedbackTarget = new Array(12); // #hardcode
@@ -160,13 +192,15 @@ function init() {
     TV         = new THREE.Mesh(TVGeometry, TVMaterial);
     TV.position.set(0, 0, 0);
 
+    feedbackPoints = [];
+
     // The renderer is set to render objects in the order in which they were
     // added to the scene, so the order we push matters.
     feedbackScene.add(TV);
     feedbackScene.add(border);
     feedbackScene.add(background);
 
-    feedbackCamera = createScalableOrthoCam(aspect, minimumScaleFactor, maximumScaleFactor);
+    feedbackCamera = createScalableOrthoCam(aspect, minimumScaleFactor, maximumScaleFactor, true);
     feedbackCamera.setScale(.8); // initial relative size of TV
     feedbackCamera.position.z = 5;
     feedbackScene.add(feedbackCamera);
@@ -176,36 +210,15 @@ function init() {
     // View scene (to be rendered to screen) setup
     ////////////
 
-    viewScene = feedbackScene;
+    viewScene = new THREE.Scene();
+    viewScene.add(feedbackScene);
+    viewScene.add(feedbackCamera.outline);
     viewCamera = createScalableOrthoCam(aspect, minimumScaleFactor, maximumScaleFactor);
 
     viewCamera.position.z = 5;
+    // viewCamera.setScale(.7);
     viewScene.add(viewCamera);
     viewCamera.lookAt(new THREE.Vector3(0, 0, 0));
-
-    /////////////
-    // Renderer setup
-    /////////////
-
-    renderer = new THREE.WebGLRenderer( {
-        antialias : true,
-        stencil   : false,
-        precision : "mediump",
-        preserveDrawingBuffer : true,
-        autoClear : false
-    } );
-
-    if (!renderer) {
-        document.getElementByType("body").innerHTML += "oh no webgl";
-    }
-
-    renderer.setSize(c_width, c_height);
-    renderer.sortObjects = false;
-    renderer.autoClearColor = false;
-
-    var container = document.getElementById('container');
-
-    container.appendChild(renderer.domElement)
 
     /////////////
     // Stats setup
@@ -653,10 +666,8 @@ function animate() {
                 touchRotationInit = touchRotation;
 
                 // panning
-                var dx = inputSettings.xyStep * (mouseX - mouseX0) * 40 / c_width
-                / inputs.scale;
-                var dy = inputSettings.xyStep * (mouseY - mouseY0) * 40 / c_height
-                / inputs.scale;
+                var dx = inputSettings.xyStep * (mouseX - mouseX0) * 40 / c_width / inputs.scale;
+                var dy = inputSettings.xyStep * (mouseY - mouseY0) * 40 / c_height / inputs.scale;
 
                 inputs.x = cameraX0 - dx;
                 inputs.y = cameraY0 - dy;
@@ -670,10 +681,8 @@ function animate() {
 
         else {
             // only pan
-            var dx = inputSettings.xyStep * (mouseX - mouseX0) * 40 / c_width
-                / inputs.scale;
-            var dy = inputSettings.xyStep * (mouseY - mouseY0) * 40 / c_height
-                / inputs.scale;
+            var dx = inputSettings.xyStep * (mouseX - mouseX0) * 40 / c_width / inputs.scale;
+            var dy = inputSettings.xyStep * (mouseY - mouseY0) * 40 / c_height / inputs.scale;
 
             inputs.x = cameraX0 - dx;
             inputs.y = cameraY0 - dy;
@@ -700,7 +709,7 @@ function animate() {
         t_start = performance.now();
     }
 
-    requestAnimationFrame(animate);
+    if (!inputs.isPaused) requestAnimationFrame(animate);
 
     stats.update();
 }
@@ -751,13 +760,34 @@ function render() {
 }
 
 
-function createScalableOrthoCam(aspect, minScale, maxScale) {
+function createScalableOrthoCam(aspect, minScale, maxScale, drawOutline) {
     // The camera sees things as scale times larger than they actually are.
 
     camera = new THREE.OrthographicCamera(-aspect / 2, aspect / 2, 0.5, -0.5, 0.1, 100);
 
     camera.minScale   = minScale;
     camera.maxScale   = maxScale;
+
+    if (drawOutline) {
+        (function() {
+            var material = new THREE.LineBasicMaterial({
+                color: 0xff0000,
+                linewidth: 5
+            });
+
+            var geometry = new THREE.Geometry();
+
+            geometry.vertices.push(new THREE.Vector3(- aspect / 2, -.5, 0));
+            geometry.vertices.push(new THREE.Vector3(  aspect / 2, -.5, 0));
+            geometry.vertices.push(new THREE.Vector3(  aspect / 2,  .5, 0));
+            geometry.vertices.push(new THREE.Vector3(- aspect / 2,  .5, 0));
+            geometry.vertices.push(new THREE.Vector3(- aspect / 2, -.5, 0));
+
+            camera.outline = new THREE.Line(geometry, material);
+
+            camera.outline.position.z = 1;
+        })();
+    }
 
     var internalScale = 1;
 
@@ -769,6 +799,8 @@ function createScalableOrthoCam(aspect, minScale, maxScale) {
         this.right = aspect / 2 / s;
         this.top = 0.5 / s;
         this.bottom = -0.5 / s;
+
+        if (this.outline) this.syncOutline();
 
         internalScale = s;
 
@@ -791,6 +823,8 @@ function createScalableOrthoCam(aspect, minScale, maxScale) {
         this.rotation.z += angle;
         this.position.x = Math.cos(angle) * x0 - Math.sin(angle) * y0;
         this.position.y = Math.sin(angle) * x0 + Math.cos(angle) * y0;
+
+        if (this.outline) this.syncOutline();
     };
 
     camera.rotateAbs = function(angle) {
@@ -801,10 +835,30 @@ function createScalableOrthoCam(aspect, minScale, maxScale) {
         this.rotation.z = angle;
         this.position.x = Math.cos(angle) * x0 - Math.sin(angle) * y0;
         this.position.y = Math.sin(angle) * x0 + Math.cos(angle) * y0;
+
+        if (this.outline) this.syncOutline();
     };
 
     camera.translateScale = function(ds) {
         this.setScale(internalScale + ds);
+    };
+
+    camera.syncOutline = function() {
+        this.outline.position.x = this.position.x;
+        this.outline.position.y = this.position.y;
+        this.outline.rotation.z = this.rotation.z;
+        this.outline.scale.x = 1.0 / internalScale;
+        this.outline.scale.y = this.outline.scale.x;
+        this.outline.scale.z = this.outline.scale.z;
+    };
+
+    camera.convertPixelsToCoordinate = function(x, y) {
+        // pixels is a 2 element array relative to the LL corner of the canvas.
+
+        return new THREE.Vector3(
+            this.left + x / c_width * (this.right - this.left),
+            this.bottom + y / c_height * (this.top - this.bottom),
+            0);
     };
 
     return camera;
@@ -852,11 +906,63 @@ function keyboardHandler(evt) {
             inputs.y += inputSettings.xyStep;
             // feedbackCamera.translateY(- inputSettings.scale *                inputSettings.xyStep);
             break;
+        case "R":
+            addPoint();
+            break;
+        case "T":
+            removePoint();
+            break;
         case " ":
             console.log("space");
             break;
     }
 }
+
+addPoint = (function() {
+    var n_col = 20;
+    var col_index = 0;
+
+    return function() {
+        var col = new THREE.Color();
+        col.setHSL(col_index / n_col, 1, .5);
+
+        col_index = (col_index + 1) % n_col;
+
+        var plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(.02, .02),
+            new THREE.MeshBasicMaterial({color: col.getHex()}));
+
+        plane.position.copy(viewCamera.convertPixelsToCoordinate(mouseX, mouseY));
+        plane.position.z = .1;
+
+        feedbackPoints.push(plane);
+        feedbackScene.add(plane);
+    }
+
+})();
+
+removePoint = function() {
+    if (feedbackPoints.length == 0) return;
+
+    var pos = viewCamera.convertPixelsToCoordinate(mouseX, mouseY);
+
+    var i, min_i, dist, min_dist = Infinity;
+    for (i = 0; i < feedbackPoints.length; i++) {
+        dist = feedbackPoints[i].position.distanceTo(pos);
+        if (dist < min_dist) {
+            min_dist = dist;
+            min_i = i;
+        }
+    }
+
+    feedbackScene.remove(feedbackPoints[min_i]);
+    feedbackPoints.splice(min_i, 1);
+
+    // feedbackPoints.geometry.vertices.splice(min_i, 1);
+    // // feedbackPoints.geometry.colors.splice(min_i, 1);
+
+    // feedbackPoints.geometry.verticesNeedUpdate = true;
+    // // feedbackPoints.geometry.colorsNeedUpdate = true;
+};
 
 onMouseDown = function(event) {
     mouseX0 = event.clientX;
