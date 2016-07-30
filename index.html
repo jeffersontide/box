@@ -137,23 +137,6 @@
 	            z-index:1020;
 	            overflow: auto;
 	        }
-
-            
-            <!-- 
-            .instructionOverlay {
-                display: none;
-                position: absolute;
-                top: 0%;
-                left: 0%;
-                width: 100%;
-                height: 100%;
-                background-color: black;
-                z-index: 1001;
-                -moz-opacity: 0.8;
-                opacity: 0.8;
-                filter: alpha(opacity = 80);
-            }
-            -->
         </style>
 
 	</head>
@@ -162,15 +145,16 @@
 	<body class="body">
 		
 		<div id="about">
-            <div id="aboutFade" class="black_overlay" onclick='function() {document.getElementById("about").style.display='none';}'></div>
-            <div id="aboutLight" class="white_content">
+            <div id="aboutFade" class="black_overlay"></div>
+            <div id="aboutLight" class="white_content" style="text-align: center;">
                 
                 <a href="http://www.theseasquirt.com/2016/04/video-feedback-simulator.html" target="_blank">About</a>
 
                 <br /><br />
                 
-                <b>There is a much better/newer version of this simulation <a href="http://aljaball.github.io/video-feedback">here</a>.</b>
+                <b>There is a much better/newer version of this simulation here: <a href="http://aljaball.github.io/video-feedback">http://aljaball.github.io/video-feedback</a>.</b>
                 
+                <button onclick="function() {document.getElementById("about").style.display = "none";}">close</button>
                 
             </div>
         </div>
